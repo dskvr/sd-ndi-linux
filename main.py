@@ -13,18 +13,17 @@ import torch
 import cv2
 from PIL import Image
 
-# Add StreamDiffusion to path if installed locally
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "streamdiffusion_repo"))
+# Add StreamDiffusion to path
+sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
 
 try:
-    import NDI
+    import NDIlib as NDI
 except ImportError:
     print("ERROR: ndi-python not installed")
     print("Install with: pip install ndi-python")
     sys.exit(1)
 
-from streamdiffusion import StreamDiffusion
-from streamdiffusion.image_utils import postprocess_image
+from utils.wrapper import StreamDiffusionWrapper
 
 # Configuration
 DEFAULT_PROMPT = "cyberpunk, neon lights, dark background, glowing, futuristic"
@@ -69,6 +68,23 @@ def list_ndi_sources(timeout=5):
     return sources, ndi_find
 
 
+def find_ndi_source_by_name(sources, search_name):
+    """Find NDI source by name (text search, returns first match)"""
+    if not sources:
+        return None
+
+    search_name_lower = search_name.lower()
+
+    # Try exact match first
+    for source in sources:
+        if search_name_lower in source.ndi_name.lower():
+            print(f"\nAuto-selected NDI source: {source.ndi_name}")
+            return source
+
+    print(f"\nERROR: No NDI source matching '{search_name}' found")
+    return None
+
+
 def select_ndi_source(sources):
     """Let user select an NDI source"""
     if not sources:
@@ -93,29 +109,33 @@ def select_ndi_source(sources):
             return None
 
 
-def setup_streamdiffusion(device="cuda", dtype=torch.float16):
+def setup_streamdiffusion(device="cuda", dtype=torch.float16, acceleration="xformers"):
     """Initialize StreamDiffusion pipeline"""
     print("\nInitializing StreamDiffusion...")
     print(f"  Model: {MODEL_ID}")
     print(f"  Device: {device}")
     print(f"  Resolution: {WIDTH}x{HEIGHT}")
     print(f"  Prompt: {DEFAULT_PROMPT}")
+    print(f"  Acceleration: {acceleration}")
 
-    # This is a simplified version - you'll need to adapt based on StreamDiffusion API
-    # For now, this is a placeholder structure
-    stream = StreamDiffusion(
+    stream = StreamDiffusionWrapper(
         model_id_or_path=MODEL_ID,
+        use_tiny_vae=True,
+        device=device,
+        dtype=dtype,
         t_index_list=T_INDEX_LIST,
         frame_buffer_size=FRAME_BUFFER_SIZE,
         width=WIDTH,
         height=HEIGHT,
+        use_lcm_lora=True,
+        output_type="pil",
         warmup=10,
-        acceleration="xformers",  # or "tensorrt" for better performance
+        vae_id=None,
+        acceleration=acceleration,
         mode="img2img",
         use_denoising_batch=True,
         cfg_type="self",
-        device=device,
-        dtype=dtype,
+        use_safety_checker=False,
     )
 
     stream.prepare(
@@ -163,7 +183,8 @@ def pil_to_ndi_frame(pil_image, frame_format=NDI.FOURCC_VIDEO_TYPE_RGBA):
     # Convert to RGBA for NDI
     img_rgba = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2RGBA)
 
-    return img_rgba.tobytes()
+    # Return numpy array directly (NDI expects numpy array, not bytes)
+    return img_rgba
 
 
 def main():
@@ -172,6 +193,8 @@ def main():
     parser.add_argument("--acceleration", choices=["xformers", "tensorrt"], default="xformers",
                        help="Acceleration mode")
     parser.add_argument("--device", default="cuda", help="Device to use (cuda/cpu)")
+    parser.add_argument("--ndi-source", type=str, default=None,
+                       help="NDI source name to auto-select (text search, matches first)")
     args = parser.parse_args()
 
     # List and select NDI source
@@ -180,7 +203,12 @@ def main():
         print("No NDI sources available. Exiting.")
         return 1
 
-    selected_source = select_ndi_source(sources)
+    # Auto-select source by name if provided, otherwise prompt user
+    if args.ndi_source:
+        selected_source = find_ndi_source_by_name(sources, args.ndi_source)
+    else:
+        selected_source = select_ndi_source(sources)
+
     if selected_source is None:
         print("No source selected. Exiting.")
         NDI.find_destroy(ndi_find)
@@ -197,7 +225,6 @@ def main():
         return 1
 
     NDI.recv_connect(ndi_recv, selected_source)
-    NDI.recv_set_tally(ndi_recv, NDI.recv_tally_t(True, False))  # Set program tally
 
     # Create NDI sender
     print(f"Creating NDI sender: {OUTPUT_NDI_NAME}")
@@ -211,7 +238,7 @@ def main():
     # Setup StreamDiffusion
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     dtype = torch.float16 if device.type == "cuda" else torch.float32
-    stream = setup_streamdiffusion(device=device, dtype=dtype)
+    stream = setup_streamdiffusion(device=device, dtype=dtype, acceleration=args.acceleration)
 
     print("\n" + "="*60)
     print("STREAMING STARTED")
@@ -235,15 +262,14 @@ def main():
                 pil_input = ndi_frame_to_pil(v)
 
                 # Process through StreamDiffusion
-                # Note: You'll need to adapt this based on StreamDiffusion's actual API
-                output_tensor = stream(image=pil_input, prompt=DEFAULT_PROMPT)
-                pil_output = postprocess_image(output_tensor)[0]
+                # The wrapper returns PIL images directly (output_type="pil")
+                pil_output = stream(image=pil_input, prompt=DEFAULT_PROMPT)
 
                 # Convert back to NDI frame
                 ndi_frame_data = pil_to_ndi_frame(pil_output)
 
                 # Create NDI video frame
-                video_frame = NDI.video_frame_v2_t()
+                video_frame = NDI.VideoFrameV2()
                 video_frame.xres = WIDTH
                 video_frame.yres = HEIGHT
                 video_frame.FourCC = NDI.FOURCC_VIDEO_TYPE_RGBA
