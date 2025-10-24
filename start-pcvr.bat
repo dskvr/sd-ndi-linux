@@ -21,11 +21,11 @@ echo Python: %PYTHON_BIN%
 echo HuggingFace cache: %HF_HOME%
 echo.
 
-REM Run with xformers and auto-select pcvr-obs-ndi-out source
-echo Starting NDI processor with pcvr-obs-ndi-out source...
+REM Run with tensorrt and auto-select pcvr-obs-ndi-out source
+echo Starting NDI processor with TensorRT acceleration...
 echo.
 
-"%PYTHON_BIN%" main.py --acceleration xformers --ndi-source pcvr-obs-ndi-out %*
+"%PYTHON_BIN%" main.py --acceleration tensorrt --ndi-source pcvr-obs-ndi-out %*
 
 echo.
 echo NDI processor stopped.
