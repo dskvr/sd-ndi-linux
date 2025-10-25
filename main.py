@@ -9,10 +9,17 @@ import os
 import time
 import argparse
 from datetime import datetime
+import warnings
+import io
+import contextlib
 import numpy as np
 import torch
 import cv2
 from PIL import Image
+
+# Suppress harmless Triton warnings
+warnings.filterwarnings('ignore', message='.*Triton.*')
+warnings.filterwarnings('ignore', message='.*triton.*')
 
 # Add StreamDiffusion to path
 sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
@@ -24,7 +31,10 @@ except ImportError:
     print("Install with: pip install ndi-python")
     sys.exit(1)
 
-from utils.wrapper import StreamDiffusionWrapper
+# Suppress Triton warnings during StreamDiffusion import
+stderr_buffer = io.StringIO()
+with contextlib.redirect_stderr(stderr_buffer):
+    from utils.wrapper import StreamDiffusionWrapper
 
 # Configuration
 DEFAULT_PROMPT = "cyberpunk, neon lights, dark background, glowing, futuristic"
