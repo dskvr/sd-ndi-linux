@@ -110,6 +110,7 @@ Add this NDI source in OBS Studio, vMix, Wirecast, or any NDI-compatible applica
 
 - **[Installation Guide](docs/installation.md)** - Detailed prerequisite installation and manual setup
 - **[Configuration Guide](docs/configuration.md)** - Prompts, models, resolution, performance tuning
+- **[Examples](docs/examples.md)** - Practical examples, use cases, and integration guides
 - **[Troubleshooting Guide](docs/troubleshooting.md)** - Common issues and solutions
 
 ## Performance
