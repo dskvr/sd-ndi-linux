@@ -1,6 +1,6 @@
 # StreamDiffusion NDI Real-time Video Processor
 
-Real-time AI video transformation using StreamDiffusion and NDI (Network Device Interface) for Windows.
+Real-time AI video transformation using StreamDiffusion and NDI (Network Device Interface) for Linux.
 
 ## Overview
 
@@ -18,11 +18,11 @@ NDI Input → StreamDiffusion (img2img) → NDI Output
 - Real-time AI-powered video transformation with SD-Turbo
 - GPU-accelerated processing with xformers or TensorRT
 - Output as NDI stream for integration with OBS, vMix, Wirecast, etc.
-- Easy Windows batch file launchers
+- Easy bash script launcher
 
 ## System Requirements
 
-- **OS**: Windows 10/11
+- **OS**: Linux (tested on Ubuntu 22.04+, Arch Linux)
 - **GPU**: NVIDIA GPU with 8GB+ VRAM (RTX 2060 or better recommended)
 - **CUDA**: CUDA 12.1+
 - **Python**: 3.10
@@ -32,45 +32,73 @@ NDI Input → StreamDiffusion (img2img) → NDI Output
 
 ### 1. Install NVIDIA CUDA 12.1
 
-Download and install CUDA Toolkit 12.1:
-https://developer.nvidia.com/cuda-12-1-0-download-archive
+**Ubuntu/Debian:**
+```bash
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo apt update
+sudo apt install cuda-toolkit-12-1
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S cuda cuda-tools
+```
+
+Add CUDA to your PATH in `~/.bashrc`:
+```bash
+export PATH=/usr/local/cuda-12.1/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+```
 
 Verify installation:
-```cmd
+```bash
 nvcc --version
 ```
 
 ### 2. Install Miniconda
 
-Download Miniconda for Windows:
-https://docs.conda.io/en/latest/miniconda.html
+Download and install Miniconda for Linux:
+```bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+```
 
-Install to a location with plenty of space (e.g., `C:\miniconda3`)
+Follow the installation prompts and restart your terminal.
 
 ### 3. Install NDI SDK
 
-Download and install the NDI Tools:
-https://ndi.tv/tools/
+Download the NDI SDK for Linux:
+https://ndi.tv/sdk/
 
-This includes the NDI SDK required for video streaming.
+Extract and install:
+```bash
+tar -xvf Install_NDI_SDK_Linux_v*.tar.gz
+./Install_NDI_SDK_v*.sh
+```
+
+Add NDI library to your system path in `~/.bashrc`:
+```bash
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+```
 
 ## StreamDiffusion Installation
 
 ### Step 1: Create Conda Environment
 
-```cmd
+```bash
 conda create -n streamdiffusion python=3.10 -y
 conda activate streamdiffusion
 ```
 
 ### Step 2: Install PyTorch with CUDA 12.1
 
-```cmd
+```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 ```
 
 Verify CUDA is available:
-```cmd
+```bash
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
@@ -78,26 +106,26 @@ Should print: `True`
 
 ### Step 3: Install xformers
 
-```cmd
+```bash
 pip install xformers==0.0.22.post7
 ```
 
 ### Step 4: Clone StreamDiffusion v1
 
-```cmd
-cd /d C:\Projects
+```bash
+cd ~/Projects
 git clone https://github.com/cumulo-autumn/StreamDiffusion.git
 cd StreamDiffusion
 ```
 
 ### Step 5: Install StreamDiffusion
 
-```cmd
+```bash
 python -m pip install -e .
 ```
 
 Install TinyVAE (required):
-```cmd
+```bash
 python -m streamdiffusion.tools.install-tensorrt
 ```
 
@@ -105,7 +133,7 @@ python -m streamdiffusion.tools.install-tensorrt
 
 Install TensorRT for 2-3x faster inference:
 
-```cmd
+```bash
 pip install tensorrt==8.6.1 --extra-index-url https://pypi.nvidia.com
 pip install polygraphy onnx-graphsurgeon --extra-index-url https://pypi.nvidia.com
 ```
@@ -116,45 +144,50 @@ pip install polygraphy onnx-graphsurgeon --extra-index-url https://pypi.nvidia.c
 
 ### Step 1: Clone This Repository
 
-```cmd
-cd /d C:\Projects
+```bash
+cd ~/Projects
 git clone https://github.com/ktamas77/streamdiffusion-ndi.git
 cd streamdiffusion-ndi
 ```
 
 ### Step 2: Install NDI Python Bindings
 
-```cmd
+```bash
 conda activate streamdiffusion
 pip install ndi-python
 ```
 
 ### Step 3: Configure Paths
 
-Edit `start.bat` and update these paths for your system:
+Edit `start.sh` and update these paths for your system:
 
-```batch
-REM Set Python path - UPDATE THIS to match your conda environment location
-set PYTHON_BIN=C:\miniconda3\envs\streamdiffusion\python.exe
+```bash
+# Set Python path - UPDATE THIS to match your conda environment location
+PYTHON_BIN="$HOME/miniconda3/envs/streamdiffusion/bin/python"
 
-REM Set StreamDiffusion path - UPDATE THIS to match your StreamDiffusion installation
-set STREAMDIFFUSION_PATH=C:\Projects\StreamDiffusion\streamdiffusion_repo
+# Set StreamDiffusion path - UPDATE THIS to match your StreamDiffusion installation
+STREAMDIFFUSION_PATH="$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
+```
+
+Make the script executable:
+```bash
+chmod +x start.sh
 ```
 
 ## Usage
 
-### Quick Start (Windows)
+### Quick Start (Linux)
 
 **Option 1: Interactive Mode**
-```cmd
-start.bat
+```bash
+./start.sh
 ```
 - Lists all available NDI sources
 - Prompts you to select one
 - Uses xformers acceleration (fast startup)
 
 **Option 2: Manual Command**
-```cmd
+```bash
 python main.py --acceleration tensorrt --ndi-source "your-source-name"
 ```
 
@@ -171,17 +204,17 @@ python main.py --acceleration tensorrt --ndi-source "your-source-name"
 ### Examples
 
 **Auto-select any source containing "obs":**
-```cmd
+```bash
 python main.py --ndi-source obs
 ```
 
 **Use TensorRT for maximum performance:**
-```cmd
+```bash
 python main.py --acceleration tensorrt
 ```
 
 **Longer search timeout for remote sources:**
-```cmd
+```bash
 python main.py --timeout 10
 ```
 
@@ -276,22 +309,22 @@ Done!
 
 Edit `main.py` to customize:
 
-### Prompt (Line 29)
+### Prompt (Line 33)
 ```python
 DEFAULT_PROMPT = "cyberpunk, neon lights, dark background, glowing, futuristic"
 ```
 
-### Negative Prompt (Line 30)
+### Negative Prompt (Line 34)
 ```python
 DEFAULT_NEGATIVE_PROMPT = "black and white, blurry, low resolution"
 ```
 
-### Model (Line 31)
+### Model (Line 35)
 ```python
 MODEL_ID = "stabilityai/sd-turbo"  # or any Stable Diffusion model
 ```
 
-### Resolution (Lines 35-36)
+### Resolution (Lines 39-40)
 ```python
 WIDTH = 512   # Higher = better quality but slower
 HEIGHT = 512
@@ -318,7 +351,7 @@ DEFAULT_PROMPT = "watercolor painting, soft colors, artistic, flowing"
 1. **Use TensorRT** for best performance (2-3x faster than xformers)
 2. **Close other GPU applications** (browsers, games, etc.)
 3. **Lower resolution** if needed (try 256x256 for maximum speed)
-4. **Reduce denoising steps** (line 37: `T_INDEX_LIST = [35, 45]`)
+4. **Reduce denoising steps** (line 43: `T_INDEX_LIST = [35, 45]`)
 5. **Use SD-Turbo model** (already configured, optimized for speed)
 
 ### Expected Performance
@@ -332,30 +365,30 @@ DEFAULT_PROMPT = "watercolor painting, soft colors, artistic, flowing"
 ## Troubleshooting
 
 ### No NDI sources found
-- Ensure NDI Tools are installed
+- Ensure NDI SDK is installed
 - Check NDI sources are on the same network
 - Increase timeout: `python main.py --timeout 10`
 - Verify firewall isn't blocking NDI (port 5960)
 
 ### ModuleNotFoundError: No module named 'NDIlib'
-```cmd
+```bash
 pip install ndi-python
 ```
 
 ### CUDA out of memory
 - Lower resolution in `main.py` (try 256x256)
 - Close other GPU applications
-- Reduce batch size (line 38: `FRAME_BUFFER_SIZE = 1`)
+- Reduce batch size (line 44: `FRAME_BUFFER_SIZE = 1`)
 
 ### StreamDiffusion import errors
-Ensure StreamDiffusion path is correct in `start.bat`:
-```batch
-set STREAMDIFFUSION_PATH=C:\Projects\StreamDiffusion\streamdiffusion_repo
+Ensure StreamDiffusion path is correct in `start.sh`:
+```bash
+STREAMDIFFUSION_PATH="$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
 ```
 
 Or pass it directly via command line:
-```cmd
-python main.py --streamdiffusion-path "C:/Projects/StreamDiffusion/streamdiffusion_repo"
+```bash
+python main.py --streamdiffusion-path "$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
 ```
 
 ### TensorRT compilation fails
@@ -366,13 +399,20 @@ python main.py --streamdiffusion-path "C:/Projects/StreamDiffusion/streamdiffusi
 ### Low FPS
 1. Use TensorRT: `--acceleration tensorrt`
 2. Lower resolution in `main.py`
-3. Check GPU usage with Task Manager
+3. Check GPU usage with `nvidia-smi`
 4. Ensure no other GPU-intensive apps are running
+
+### NDI library not found
+If you get an error about NDI libraries not being found:
+```bash
+sudo ldconfig
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+```
 
 ## Files
 
 - `main.py` - Main NDI processor script
-- `start.bat` - Quick launcher with xformers (interactive)
+- `start.sh` - Quick launcher with xformers (interactive)
 - `requirements.txt` - Python dependencies
 
 ## Architecture
@@ -418,8 +458,8 @@ main.py
 ### Environment Variables
 
 Set HuggingFace cache location (optional):
-```cmd
-set HF_HOME=C:\huggingface_cache
+```bash
+export HF_HOME=$HOME/.cache/huggingface
 ```
 
 ### Debug Mode
@@ -452,7 +492,8 @@ For issues and questions:
 ---
 
 **Tested on:**
-- Windows 11
+- Ubuntu 22.04 LTS
+- Arch Linux
 - NVIDIA RTX 3080 (10GB VRAM)
 - CUDA 12.1
 - Python 3.10
