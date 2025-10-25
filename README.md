@@ -2,7 +2,7 @@
 
 Real-time AI video transformation using StreamDiffusion and NDI (Network Device Interface) for Linux.
 
-Behaves the same as [stablediffusion-sdi](https://github.com/ktamas77/streamdiffusion-ndi) but with the spyware dependency (and support) removed.
+Behaves the same as [streamdiffusion-sdi](https://github.com/ktamas77/streamdiffusion-ndi) but with the spyware dependency (and support) removed.
 
 ## Overview
 
