@@ -4,7 +4,7 @@ Real-time AI video transformation using StreamDiffusion and NDI (Network Device 
 
 Captures video from an NDI source, applies AI transformation using Stable Diffusion, and outputs the result as a new NDI stream.
 
-Same functionality as [streamdiffision-ndi](https://github.com/ktamas77/streamdiffusion-ndi) but without the spyware dependency or support ;)
+Same functionality as [streamdiffision-ndi](https://github.com/ktamas77/streamdiffusion-ndi) but without the spyware dependency or support.
 
 **Pipeline:** `NDI Input → StreamDiffusion (img2img) → NDI Output`
 
