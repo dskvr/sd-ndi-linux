@@ -367,7 +367,6 @@ STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
 
 - `main.py` - Main NDI processor script
 - `start.bat` - Quick launcher with xformers (interactive)
-- `start.sh` - Bash script for Git Bash/WSL
 - `requirements.txt` - Python dependencies
 
 ## Architecture
