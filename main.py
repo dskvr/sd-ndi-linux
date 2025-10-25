@@ -17,13 +17,17 @@ import torch
 import cv2
 from PIL import Image
 
+# Configuration - StreamDiffusion Path
+# Update this to match your StreamDiffusion installation location
+STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
+
 # Suppress harmless warnings
 warnings.filterwarnings('ignore', message='.*Triton.*')
 warnings.filterwarnings('ignore', message='.*triton.*')
 warnings.filterwarnings('ignore', category=FutureWarning, module='diffusers')
 
 # Add StreamDiffusion to path
-sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
+sys.path.append(STREAMDIFFUSION_PATH)
 
 try:
     import NDIlib as NDI

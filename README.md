@@ -45,7 +45,7 @@ nvcc --version
 Download Miniconda for Windows:
 https://docs.conda.io/en/latest/miniconda.html
 
-Install to a location with plenty of space (e.g., `D:\miniconda3`)
+Install to a location with plenty of space (e.g., `C:\miniconda3`)
 
 ### 3. Install NDI SDK
 
@@ -85,7 +85,7 @@ pip install xformers==0.0.22.post7
 ### Step 4: Clone StreamDiffusion v1
 
 ```cmd
-cd D:\dev
+cd /d C:\Projects
 git clone https://github.com/cumulo-autumn/StreamDiffusion.git
 cd StreamDiffusion
 ```
@@ -117,8 +117,8 @@ pip install polygraphy onnx-graphsurgeon --extra-index-url https://pypi.nvidia.c
 ### Step 1: Clone This Repository
 
 ```cmd
-cd D:\dev
-git clone <your-repo-url> streamdiffusion-ndi
+cd /d C:\Projects
+git clone https://github.com/ktamas77/streamdiffusion-ndi.git
 cd streamdiffusion-ndi
 ```
 
@@ -131,14 +131,14 @@ pip install ndi-python
 
 ### Step 3: Configure Paths
 
-Update `main.py` line 17 if your StreamDiffusion is installed elsewhere:
+Update the `STREAMDIFFUSION_PATH` constant in `main.py` (line 22) to match your installation:
 ```python
-sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
+STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
 ```
 
-Update batch files (`start.bat`, `start-pcvr.bat`) with your Python path:
+Update batch file (`start.bat`) with your Python path:
 ```batch
-set PYTHON_BIN=D:\miniconda3\envs\streamdiffusion\python.exe
+set PYTHON_BIN=C:\miniconda3\envs\streamdiffusion\python.exe
 ```
 
 ## Usage
@@ -153,15 +153,7 @@ start.bat
 - Prompts you to select one
 - Uses xformers acceleration (fast startup)
 
-**Option 2: Auto-select PCVR Source (Recommended for VR)**
-```cmd
-start-pcvr.bat
-```
-- Automatically selects "pcvr-obs-ndi-out" source
-- Uses TensorRT acceleration (maximum performance)
-- Perfect for VR workflows
-
-**Option 3: Manual Command**
+**Option 2: Manual Command**
 ```cmd
 python main.py --acceleration tensorrt --ndi-source "your-source-name"
 ```
@@ -355,9 +347,9 @@ pip install ndi-python
 - Reduce batch size (line 38: `FRAME_BUFFER_SIZE = 1`)
 
 ### StreamDiffusion import errors
-Ensure StreamDiffusion path is correct in `main.py` line 17:
+Ensure StreamDiffusion path is correct in `main.py`:
 ```python
-sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
+STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
 ```
 
 ### TensorRT compilation fails
@@ -375,7 +367,6 @@ sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
 
 - `main.py` - Main NDI processor script
 - `start.bat` - Quick launcher with xformers (interactive)
-- `start-pcvr.bat` - Auto-select PCVR source with TensorRT
 - `start.sh` - Bash script for Git Bash/WSL
 - `requirements.txt` - Python dependencies
 
@@ -423,7 +414,7 @@ main.py
 
 Set HuggingFace cache location (optional):
 ```cmd
-set HF_HOME=D:\huggingface_cache
+set HF_HOME=C:\huggingface_cache
 ```
 
 ### Debug Mode

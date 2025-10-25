@@ -6,11 +6,13 @@ echo   StreamDiffusion NDI Real-time Processor
 echo ========================================
 echo.
 
-REM Set environment
-set HF_HOME=/d/huggingface_cache
+REM ===== CONFIGURE THESE PATHS FOR YOUR SYSTEM =====
+REM Set HuggingFace cache location (optional, can be commented out)
+set HF_HOME=C:\huggingface_cache
 
-REM Python path
-set PYTHON_BIN=D:\miniconda3\envs\streamdiffusion\python.exe
+REM Set Python path - UPDATE THIS to match your conda environment location
+set PYTHON_BIN=C:\miniconda3\envs\streamdiffusion\python.exe
+REM ================================================
 
 REM Change to script directory
 cd /d "%~dp0"
