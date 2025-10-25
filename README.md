@@ -131,14 +131,14 @@ pip install ndi-python
 
 ### Step 3: Configure Paths
 
-Update the `STREAMDIFFUSION_PATH` constant in `main.py` (line 22) to match your installation:
-```python
-STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
-```
+Edit `start.bat` and update these paths for your system:
 
-Update batch file (`start.bat`) with your Python path:
 ```batch
+REM Set Python path - UPDATE THIS to match your conda environment location
 set PYTHON_BIN=C:\miniconda3\envs\streamdiffusion\python.exe
+
+REM Set StreamDiffusion path - UPDATE THIS to match your StreamDiffusion installation
+set STREAMDIFFUSION_PATH=C:\Projects\StreamDiffusion\streamdiffusion_repo
 ```
 
 ## Usage
@@ -165,6 +165,7 @@ python main.py --acceleration tensorrt --ndi-source "your-source-name"
 --acceleration <mode>        xformers or tensorrt (default: xformers)
 --device <device>            cuda or cpu (default: cuda)
 --ndi-source <name>          Auto-select NDI source by name (text search)
+--streamdiffusion-path <path> Path to StreamDiffusion repository
 ```
 
 ### Examples
@@ -347,9 +348,14 @@ pip install ndi-python
 - Reduce batch size (line 38: `FRAME_BUFFER_SIZE = 1`)
 
 ### StreamDiffusion import errors
-Ensure StreamDiffusion path is correct in `main.py`:
-```python
-STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
+Ensure StreamDiffusion path is correct in `start.bat`:
+```batch
+set STREAMDIFFUSION_PATH=C:\Projects\StreamDiffusion\streamdiffusion_repo
+```
+
+Or pass it directly via command line:
+```cmd
+python main.py --streamdiffusion-path "C:/Projects/StreamDiffusion/streamdiffusion_repo"
 ```
 
 ### TensorRT compilation fails

@@ -12,6 +12,9 @@ set HF_HOME=C:\huggingface_cache
 
 REM Set Python path - UPDATE THIS to match your conda environment location
 set PYTHON_BIN=C:\miniconda3\envs\streamdiffusion\python.exe
+
+REM Set StreamDiffusion path - UPDATE THIS to match your StreamDiffusion installation
+set STREAMDIFFUSION_PATH=C:\Projects\StreamDiffusion\streamdiffusion_repo
 REM ================================================
 
 REM Change to script directory
@@ -20,6 +23,7 @@ cd /d "%~dp0"
 echo Working directory: %CD%
 echo Python: %PYTHON_BIN%
 echo HuggingFace cache: %HF_HOME%
+echo StreamDiffusion path: %STREAMDIFFUSION_PATH%
 echo.
 
 REM Run with TensorRT for maximum performance (slower first-time startup)
@@ -27,7 +31,7 @@ REM Change to --acceleration xformers for faster startup if needed
 echo Starting NDI processor...
 echo.
 
-"%PYTHON_BIN%" main.py --acceleration tensorrt %*
+"%PYTHON_BIN%" main.py --acceleration tensorrt --streamdiffusion-path "%STREAMDIFFUSION_PATH%" %*
 
 echo.
 echo NDI processor stopped.

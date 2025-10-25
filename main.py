@@ -17,17 +17,10 @@ import torch
 import cv2
 from PIL import Image
 
-# Configuration - StreamDiffusion Path
-# Update this to match your StreamDiffusion installation location
-STREAMDIFFUSION_PATH = "C:/Projects/StreamDiffusion/streamdiffusion_repo"
-
 # Suppress harmless warnings
 warnings.filterwarnings('ignore', message='.*Triton.*')
 warnings.filterwarnings('ignore', message='.*triton.*')
 warnings.filterwarnings('ignore', category=FutureWarning, module='diffusers')
-
-# Add StreamDiffusion to path
-sys.path.append(STREAMDIFFUSION_PATH)
 
 try:
     import NDIlib as NDI
@@ -35,11 +28,6 @@ except ImportError:
     print("ERROR: ndi-python not installed")
     print("Install with: pip install ndi-python")
     sys.exit(1)
-
-# Suppress Triton warnings during StreamDiffusion import
-stderr_buffer = io.StringIO()
-with contextlib.redirect_stderr(stderr_buffer):
-    from utils.wrapper import StreamDiffusionWrapper
 
 # Configuration
 DEFAULT_PROMPT = "cyberpunk, neon lights, dark background, glowing, futuristic"
@@ -222,7 +210,22 @@ def main():
     parser.add_argument("--device", default="cuda", help="Device to use (cuda/cpu)")
     parser.add_argument("--ndi-source", type=str, default=None,
                        help="NDI source name to auto-select (text search, matches first)")
+    parser.add_argument("--streamdiffusion-path", type=str,
+                       default="C:/Projects/StreamDiffusion/streamdiffusion_repo",
+                       help="Path to StreamDiffusion repository")
     args = parser.parse_args()
+
+    # Add StreamDiffusion to path
+    sys.path.append(args.streamdiffusion_path)
+
+    # Import StreamDiffusion wrapper (after path is set)
+    # Suppress Triton warnings during import
+    stderr_buffer = io.StringIO()
+    with contextlib.redirect_stderr(stderr_buffer):
+        from utils.wrapper import StreamDiffusionWrapper
+
+    # Make it available in local scope for later use
+    globals()['StreamDiffusionWrapper'] = StreamDiffusionWrapper
 
     # List and select NDI source
     sources, ndi_find = list_ndi_sources(timeout=args.timeout)
