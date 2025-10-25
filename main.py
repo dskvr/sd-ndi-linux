@@ -17,9 +17,10 @@ import torch
 import cv2
 from PIL import Image
 
-# Suppress harmless Triton warnings
+# Suppress harmless warnings
 warnings.filterwarnings('ignore', message='.*Triton.*')
 warnings.filterwarnings('ignore', message='.*triton.*')
+warnings.filterwarnings('ignore', category=FutureWarning, module='diffusers')
 
 # Add StreamDiffusion to path
 sys.path.append("D:/dev/StreamDiffusion/streamdiffusion_repo")
@@ -45,6 +46,8 @@ OUTPUT_NDI_NAME = "streamdiffusion-ndi-render"
 # StreamDiffusion parameters
 WIDTH = 512
 HEIGHT = 512
+OUTPUT_WIDTH = 1920
+OUTPUT_HEIGHT = 1080
 T_INDEX_LIST = [35, 45]  # Denoising timesteps
 FRAME_BUFFER_SIZE = 1
 
@@ -191,10 +194,14 @@ def ndi_frame_to_pil(video_frame, store_resolution=None):
     return Image.fromarray(img_rgb)
 
 
-def pil_to_ndi_frame(pil_image, frame_format=NDI.FOURCC_VIDEO_TYPE_RGBA):
+def pil_to_ndi_frame(pil_image, output_width=OUTPUT_WIDTH, output_height=OUTPUT_HEIGHT, frame_format=NDI.FOURCC_VIDEO_TYPE_RGBA):
     """Convert PIL Image to NDI frame data"""
     # Convert PIL to numpy array
     img_rgb = np.array(pil_image)
+
+    # Resize to output resolution (unsqueeze back to 16:9)
+    if img_rgb.shape[1] != output_width or img_rgb.shape[0] != output_height:
+        img_rgb = cv2.resize(img_rgb, (output_width, output_height))
 
     # Convert to RGBA for NDI
     img_rgba = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2RGBA)
@@ -244,8 +251,7 @@ def main():
 
     # Create NDI sender with custom name
     print(f"Creating NDI sender: {OUTPUT_NDI_NAME}")
-    send_settings = NDI.SendCreate()
-    send_settings.p_ndi_name = OUTPUT_NDI_NAME
+    send_settings = NDI.SendCreate(p_ndi_name=OUTPUT_NDI_NAME)
     ndi_send = NDI.send_create(send_settings)
     if ndi_send is None:
         print("ERROR: Failed to create NDI sender")
@@ -288,8 +294,9 @@ def main():
                     print("="*80)
                     print(f"  Input Source:       {selected_source.ndi_name}")
                     print(f"  Input Resolution:   {input_resolution['width']}x{input_resolution['height']}")
+                    print(f"  Internal Resolution: {WIDTH}x{HEIGHT}")
                     print(f"  Output Source:      {OUTPUT_NDI_NAME}")
-                    print(f"  Output Resolution:  {WIDTH}x{HEIGHT}")
+                    print(f"  Output Resolution:  {OUTPUT_WIDTH}x{OUTPUT_HEIGHT}")
                     print(f"  Model:              {MODEL_ID}")
                     print(f"  Device:             {device}")
                     print(f"  Acceleration:       {args.acceleration}")
@@ -304,21 +311,21 @@ def main():
                 # The wrapper returns PIL images directly (output_type="pil")
                 pil_output = stream(image=pil_input, prompt=DEFAULT_PROMPT)
 
-                # Convert back to NDI frame
+                # Convert back to NDI frame (resize to output resolution)
                 ndi_frame_data = pil_to_ndi_frame(pil_output)
 
                 # Create NDI video frame
                 video_frame = NDI.VideoFrameV2()
-                video_frame.xres = WIDTH
-                video_frame.yres = HEIGHT
+                video_frame.xres = OUTPUT_WIDTH
+                video_frame.yres = OUTPUT_HEIGHT
                 video_frame.FourCC = NDI.FOURCC_VIDEO_TYPE_RGBA
                 video_frame.frame_rate_N = 30000
                 video_frame.frame_rate_D = 1001
                 video_frame.data = ndi_frame_data
-                video_frame.line_stride_in_bytes = WIDTH * 4
+                video_frame.line_stride_in_bytes = OUTPUT_WIDTH * 4
 
                 # Track sent bytes
-                frame_bytes_sent = WIDTH * HEIGHT * 4  # RGBA
+                frame_bytes_sent = OUTPUT_WIDTH * OUTPUT_HEIGHT * 4  # RGBA
                 bytes_sent_total += frame_bytes_sent
 
                 # Send NDI frame
