@@ -20,12 +20,12 @@ echo Python: %PYTHON_BIN%
 echo HuggingFace cache: %HF_HOME%
 echo.
 
-REM Run with xformers by default (faster startup than tensorrt)
-REM Add --acceleration tensorrt for maximum performance (slower first-time startup)
+REM Run with TensorRT for maximum performance (slower first-time startup)
+REM Change to --acceleration xformers for faster startup if needed
 echo Starting NDI processor...
 echo.
 
-"%PYTHON_BIN%" main.py --acceleration xformers %*
+"%PYTHON_BIN%" main.py --acceleration tensorrt %*
 
 echo.
 echo NDI processor stopped.

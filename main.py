@@ -8,6 +8,7 @@ import sys
 import os
 import time
 import argparse
+from datetime import datetime
 import numpy as np
 import torch
 import cv2
@@ -149,11 +150,16 @@ def setup_streamdiffusion(device="cuda", dtype=torch.float16, acceleration="xfor
     return stream
 
 
-def ndi_frame_to_pil(video_frame):
+def ndi_frame_to_pil(video_frame, store_resolution=None):
     """Convert NDI video frame to PIL Image"""
     # NDI frames are typically in UYVY or RGBA format
     # Convert to RGB PIL Image
     data = np.frombuffer(video_frame.data, dtype=np.uint8)
+
+    # Store original resolution if dict provided
+    if store_resolution is not None and 'width' not in store_resolution:
+        store_resolution['width'] = video_frame.xres
+        store_resolution['height'] = video_frame.yres
 
     # Reshape based on NDI frame format
     if video_frame.FourCC == NDI.FOURCC_VIDEO_TYPE_UYVY:
@@ -226,9 +232,11 @@ def main():
 
     NDI.recv_connect(ndi_recv, selected_source)
 
-    # Create NDI sender
+    # Create NDI sender with custom name
     print(f"Creating NDI sender: {OUTPUT_NDI_NAME}")
-    ndi_send = NDI.send_create()
+    send_settings = NDI.SendCreate()
+    send_settings.p_ndi_name = OUTPUT_NDI_NAME
+    ndi_send = NDI.send_create(send_settings)
     if ndi_send is None:
         print("ERROR: Failed to create NDI sender")
         NDI.recv_destroy(ndi_recv)
@@ -240,17 +248,15 @@ def main():
     dtype = torch.float16 if device.type == "cuda" else torch.float32
     stream = setup_streamdiffusion(device=device, dtype=dtype, acceleration=args.acceleration)
 
-    print("\n" + "="*60)
-    print("STREAMING STARTED")
-    print("="*60)
-    print(f"Input:  {selected_source.ndi_name}")
-    print(f"Output: {OUTPUT_NDI_NAME}")
-    print(f"Prompt: {DEFAULT_PROMPT}")
-    print("\nPress Ctrl+C to stop")
-    print("="*60 + "\n")
-
     frame_count = 0
     start_time = time.time()
+    last_stats_time = start_time
+    bytes_received_total = 0
+    bytes_sent_total = 0
+    bytes_received_last = 0
+    bytes_sent_last = 0
+    input_resolution = {}
+    session_info_printed = False
 
     try:
         while True:
@@ -258,8 +264,31 @@ def main():
             t, v, a, m = NDI.recv_capture_v2(ndi_recv, 1000)  # 1000ms timeout
 
             if t == NDI.FRAME_TYPE_VIDEO:
-                # Convert NDI frame to PIL Image
-                pil_input = ndi_frame_to_pil(v)
+                # Track received bytes
+                frame_bytes_received = len(v.data) if hasattr(v, 'data') else 0
+                bytes_received_total += frame_bytes_received
+
+                # Convert NDI frame to PIL Image (capture resolution on first frame)
+                pil_input = ndi_frame_to_pil(v, input_resolution)
+
+                # Print session info once we have the first frame
+                if not session_info_printed and input_resolution:
+                    print("\n" + "="*80)
+                    print("STREAMING STARTED".center(80))
+                    print("="*80)
+                    print(f"  Input Source:       {selected_source.ndi_name}")
+                    print(f"  Input Resolution:   {input_resolution['width']}x{input_resolution['height']}")
+                    print(f"  Output Source:      {OUTPUT_NDI_NAME}")
+                    print(f"  Output Resolution:  {WIDTH}x{HEIGHT}")
+                    print(f"  Model:              {MODEL_ID}")
+                    print(f"  Device:             {device}")
+                    print(f"  Acceleration:       {args.acceleration}")
+                    print(f"  Prompt:             {DEFAULT_PROMPT}")
+                    if DEFAULT_NEGATIVE_PROMPT:
+                        print(f"  Negative Prompt:    {DEFAULT_NEGATIVE_PROMPT}")
+                    print("="*80)
+                    print("\nPress Ctrl+C to stop\n")
+                    session_info_printed = True
 
                 # Process through StreamDiffusion
                 # The wrapper returns PIL images directly (output_type="pil")
@@ -278,6 +307,10 @@ def main():
                 video_frame.data = ndi_frame_data
                 video_frame.line_stride_in_bytes = WIDTH * 4
 
+                # Track sent bytes
+                frame_bytes_sent = WIDTH * HEIGHT * 4  # RGBA
+                bytes_sent_total += frame_bytes_sent
+
                 # Send NDI frame
                 NDI.send_send_video_v2(ndi_send, video_frame)
 
@@ -286,11 +319,43 @@ def main():
 
                 frame_count += 1
 
-                # Print stats every 30 frames
-                if frame_count % 30 == 0:
-                    elapsed = time.time() - start_time
+                # Print stats every frame (updates same line)
+                current_time = time.time()
+                elapsed = current_time - start_time
+                stats_interval = current_time - last_stats_time
+
+                if stats_interval >= 1.0:  # Update stats display every second
                     fps = frame_count / elapsed
-                    print(f"Processed {frame_count} frames | {fps:.2f} FPS")
+
+                    # Calculate per-second rates
+                    bytes_recv_per_sec = (bytes_received_total - bytes_received_last) / stats_interval
+                    bytes_sent_per_sec = (bytes_sent_total - bytes_sent_last) / stats_interval
+
+                    # Update last values
+                    bytes_received_last = bytes_received_total
+                    bytes_sent_last = bytes_sent_total
+                    last_stats_time = current_time
+
+                    # Format bytes for display
+                    def format_bytes(b):
+                        if b >= 1_000_000_000:
+                            return f"{b/1_000_000_000:.2f} GB"
+                        elif b >= 1_000_000:
+                            return f"{b/1_000_000:.2f} MB"
+                        elif b >= 1_000:
+                            return f"{b/1_000:.2f} KB"
+                        else:
+                            return f"{b} B"
+
+                    now = datetime.now()
+                    date_str = now.strftime("%Y-%m-%d")
+                    time_str = now.strftime("%H:%M:%S")
+
+                    # Print stats on same line (carriage return)
+                    print(f"\r{date_str} {time_str} | FPS: {fps:.2f} | "
+                          f"RX: {format_bytes(bytes_received_total)} ({format_bytes(bytes_recv_per_sec)}/s) | "
+                          f"TX: {format_bytes(bytes_sent_total)} ({format_bytes(bytes_sent_per_sec)}/s) | "
+                          f"Frames: {frame_count}", end='', flush=True)
 
             elif t == NDI.FRAME_TYPE_AUDIO:
                 # Free audio frame (we're not processing audio)
