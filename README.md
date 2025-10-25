@@ -172,4 +172,4 @@ Apache 2.0 (based on StreamDiffusion)
 
 ---
 
-**Tested on:** Ubuntu 22.04 LTS, Arch Linux | NVIDIA RTX 3080 | CUDA 12.1 | Python 3.10
+**Tested on:** Ubuntu 22.04 LTS, Arch Linux (Wayland) | NVIDIA RTX 3080 | CUDA 12.1 | Python 3.10
