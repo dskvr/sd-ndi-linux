@@ -2,620 +2,172 @@
 
 Real-time AI video transformation using StreamDiffusion and NDI (Network Device Interface) for Linux.
 
-Behaves the same as [streamdiffusion-sdi](https://github.com/ktamas77/streamdiffusion-ndi) but with the spyware dependency (and support) removed.
+Captures video from an NDI source, applies AI transformation using Stable Diffusion, and outputs the result as a new NDI stream.
 
-## Overview
-
-This tool captures video from an NDI source, applies real-time AI transformation using StreamDiffusion, and outputs the result as a new NDI stream.
-
-**Pipeline:**
-```
-NDI Input → StreamDiffusion (img2img) → NDI Output
-```
+**Pipeline:** `NDI Input → StreamDiffusion (img2img) → NDI Output`
 
 ## Features
 
-- List and select from available NDI sources
-- Auto-select NDI sources by name (text search)
+- List and auto-select NDI sources by name
 - Real-time AI-powered video transformation with SD-Turbo
-- GPU-accelerated processing with xformers or TensorRT
-- Output as NDI stream for integration with OBS, vMix, Wirecast, etc.
-- Easy bash script launcher
+- GPU-accelerated processing (xformers or TensorRT)
+- Output as NDI stream for OBS, vMix, Wirecast, etc.
+- Easy installation and service management via Makefile
 
 ## System Requirements
 
 - **OS**: Linux (tested on Ubuntu 22.04+, Arch Linux)
-- **GPU**: NVIDIA GPU with 8GB+ VRAM (RTX 2060 or better recommended)
-- **CUDA**: CUDA 12.1+
+- **GPU**: NVIDIA GPU with 8GB+ VRAM (RTX 2060+)
+- **CUDA**: 12.1+
 - **Python**: 3.10
-- **Disk Space**: ~10GB for models and dependencies
+- **Disk**: ~10GB for models and dependencies
 
-## Quick Start with Makefile
-
-This project includes a comprehensive Makefile for easy installation and service management. You can use either **conda** (default) or **venv** for Python environment management.
+## Quick Installation
 
 ### Check Compatibility
 
 ```bash
-make check-compat
+make check-compat  # Verify Linux OS and NVIDIA GPU
+make check-deps    # Check for CUDA, Conda/Python, NDI SDK
 ```
 
-This will verify:
-- Linux OS
-- NVIDIA GPU availability
+### Install Everything
 
-### Check Dependencies
-
-```bash
-make check-deps
-```
-
-This will check if all required dependencies are installed:
-- CUDA
-- Conda
-- NDI SDK
-- StreamDiffusion
-
-### Full Installation
-
-**Option 1: Using Conda (default):**
+**Using Conda (recommended):**
 ```bash
 make install
 ```
 
-**Option 2: Using Python venv:**
+**Using Python venv:**
 ```bash
 make install-venv
 ```
 
-Both options will:
+The Makefile will:
 1. Check system compatibility
-2. Guide you through prerequisite installation (CUDA, NDI SDK - conda skipped for venv)
-3. Create the Python environment
-4. Install all Python dependencies and StreamDiffusion
+2. Guide you through prerequisite installation (CUDA, NDI SDK)
+3. Create the Python environment (conda or venv)
+4. Install all dependencies and StreamDiffusion
 
-**Note**:
-- Some steps (CUDA, NDI SDK) require manual download/installation
-- The Makefile will pause and provide instructions when manual action is needed
-- The `--no-deps` flag bypasses dependency conflicts while still installing working versions
+**Note**: Some prerequisites (CUDA, NDI SDK) require manual download/installation. The Makefile will pause with instructions when needed.
 
-### Service Management
+## Usage
 
-**Start the processor (conda):**
+### Start Processing
+
+**Conda:**
 ```bash
 make start
 ```
 
-**Start the processor (venv):**
+**Venv:**
 ```bash
 make start ENV_TYPE=venv
 ```
 
-**Stop the processor:**
-```bash
-make stop
-```
+This will:
+- List available NDI sources
+- Let you select one
+- Start processing and output to NDI stream named `streamdiffusion-ndi-render`
 
-**Restart the processor:**
-```bash
-make restart
-```
-
-**Check status:**
-```bash
-make status
-```
-
-**Run a quick test (conda):**
-```bash
-make test
-```
-
-**Run a quick test (venv):**
-```bash
-make test ENV_TYPE=venv
-```
-
-### Available Commands
-
-Run `make help` to see all available commands:
-```bash
-make help
-```
-
-## Manual Prerequisites Installation
-
-If you prefer to install manually instead of using the Makefile, follow these steps:
-
-### 1. Install NVIDIA CUDA 12.1
-
-**Ubuntu/Debian:**
-```bash
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
-sudo apt update
-sudo apt install cuda-toolkit-12-1
-```
-
-**Arch Linux:**
-```bash
-sudo pacman -S cuda cuda-tools
-```
-
-Add CUDA to your PATH in `~/.bashrc`:
-```bash
-export PATH=/usr/local/cuda-12.1/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
-```
-
-Verify installation:
-```bash
-nvcc --version
-```
-
-### 2. Install Miniconda
-
-Download and install Miniconda for Linux:
-```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-```
-
-Follow the installation prompts and restart your terminal.
-
-### 3. Install NDI SDK
-
-Download the NDI SDK for Linux:
-https://ndi.tv/sdk/
-
-Extract and install:
-```bash
-tar -xvf Install_NDI_SDK_Linux_v*.tar.gz
-./Install_NDI_SDK_v*.sh
-```
-
-Add NDI library to your system path in `~/.bashrc`:
-```bash
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-```
-
-## StreamDiffusion Installation
-
-### Step 1: Create Conda Environment
+### Other Commands
 
 ```bash
-conda create -n streamdiffusion python=3.10 -y
-conda activate streamdiffusion
-```
-
-### Step 2: Install PyTorch with CUDA 12.1
-
-```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-```
-
-Verify CUDA is available:
-```bash
-python -c "import torch; print(torch.cuda.is_available())"
-```
-
-Should print: `True`
-
-### Step 3: Install xformers
-
-```bash
-pip install xformers==0.0.22.post7
-```
-
-### Step 4: Clone StreamDiffusion v1
-
-```bash
-cd ~/Projects
-git clone https://github.com/cumulo-autumn/StreamDiffusion.git
-cd StreamDiffusion
-```
-
-### Step 5: Install StreamDiffusion
-
-```bash
-python -m pip install -e .
-```
-
-Install TinyVAE (required):
-```bash
-python -m streamdiffusion.tools.install-tensorrt
-```
-
-### Step 6: (Optional) Install TensorRT for Maximum Performance
-
-Install TensorRT for 2-3x faster inference:
-
-```bash
-pip install tensorrt==8.6.1 --extra-index-url https://pypi.nvidia.com
-pip install polygraphy onnx-graphsurgeon --extra-index-url https://pypi.nvidia.com
-```
-
-**Note**: TensorRT compilation takes 5-10 minutes on first run but is cached for subsequent runs.
-
-## This Repository Setup
-
-### Step 1: Clone This Repository
-
-```bash
-cd ~/Projects
-git clone https://github.com/ktamas77/streamdiffusion-ndi.git
-cd streamdiffusion-ndi
-```
-
-### Step 2: Install NDI Python Bindings
-
-```bash
-conda activate streamdiffusion
-pip install ndi-python
-```
-
-### Step 3: Configure Paths
-
-Edit `start.sh` and update these paths for your system:
-
-```bash
-# Set Python path - UPDATE THIS to match your conda environment location
-PYTHON_BIN="$HOME/miniconda3/envs/streamdiffusion/bin/python"
-
-# Set StreamDiffusion path - UPDATE THIS to match your StreamDiffusion installation
-STREAMDIFFUSION_PATH="$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
-```
-
-Make the script executable:
-```bash
-chmod +x start.sh
-```
-
-## Usage
-
-### Quick Start (Linux)
-
-**Option 1: Interactive Mode**
-```bash
-./start.sh
-```
-- Lists all available NDI sources
-- Prompts you to select one
-- Uses xformers acceleration (fast startup)
-
-**Option 2: Manual Command**
-```bash
-python main.py --acceleration tensorrt --ndi-source "your-source-name"
+make stop           # Stop the processor
+make restart        # Restart the processor
+make status         # Check if running
+make test           # Quick test run (3 second timeout)
+make clean          # Remove cached models and temp files
+make help           # Show all commands
 ```
 
 ### Command-line Options
 
-```
---timeout <seconds>          NDI source search timeout (default: 5)
---acceleration <mode>        xformers or tensorrt (default: xformers)
---device <device>            cuda or cpu (default: cuda)
---ndi-source <name>          Auto-select NDI source by name (text search)
---streamdiffusion-path <path> Path to StreamDiffusion repository
-```
-
-### Examples
-
-**Auto-select any source containing "obs":**
+Run manually with options:
 ```bash
-python main.py --ndi-source obs
+python main.py --ndi-source "obs" --acceleration tensorrt
 ```
 
-**Use TensorRT for maximum performance:**
-```bash
-python main.py --acceleration tensorrt
-```
+Options:
+- `--timeout <seconds>` - NDI source search timeout (default: 5)
+- `--acceleration <mode>` - xformers or tensorrt (default: xformers)
+- `--device <device>` - cuda or cpu (default: cuda)
+- `--ndi-source <name>` - Auto-select NDI source by name
+- `--streamdiffusion-path <path>` - Path to StreamDiffusion repo
 
-**Longer search timeout for remote sources:**
-```bash
-python main.py --timeout 10
-```
+## Output
 
-### Output Stream
-
-The processed video is available as an NDI source named:
+The processed video stream is available as:
 ```
 streamdiffusion-ndi-render
 ```
 
-Add this as a source in:
-- OBS Studio (NDI plugin)
-- vMix
-- Wirecast
-- Any NDI-compatible application
+Add this NDI source in OBS Studio, vMix, Wirecast, or any NDI-compatible application.
 
-### Example Output
+## Documentation
 
-When running, you'll see output like this:
+- **[Installation Guide](docs/installation.md)** - Detailed prerequisite installation and manual setup
+- **[Configuration Guide](docs/configuration.md)** - Prompts, models, resolution, performance tuning
+- **[Troubleshooting Guide](docs/troubleshooting.md)** - Common issues and solutions
 
-```
-Searching for NDI sources (timeout: 5s)...
+## Performance
 
-Found 2 NDI source(s):
-  [0] MY-PC (OBS Studio)
-  [1] DESKTOP-ABC (vMix - Camera 1)
+**xformers (default):**
+- Fast startup (30-60s)
+- Good performance (~15-20 FPS on RTX 3080)
 
-Select NDI source [0-1]: 0
-
-Selected source: MY-PC (OBS Studio)
-
-Creating NDI receiver...
-Creating NDI sender: streamdiffusion-ndi-render
-
-Initializing StreamDiffusion...
-  Model: stabilityai/sd-turbo
-  Device: cuda
-  Resolution: 512x512
-  Prompt: cyberpunk, neon lights, dark background, glowing, futuristic
-  Acceleration: xformers
-StreamDiffusion initialized successfully!
-
-================================================================================
-                            STREAMING STARTED
-================================================================================
-  Input Source:       MY-PC (OBS Studio)
-  Input Resolution:   1920x1080
-  Internal Resolution: 512x512
-  Output Source:      streamdiffusion-ndi-render
-  Output Resolution:  1920x1080
-  Model:              stabilityai/sd-turbo
-  Device:             cuda:0
-  Acceleration:       xformers
-  Prompt:             cyberpunk, neon lights, dark background, glowing, futuristic
-  Negative Prompt:    black and white, blurry, low resolution, pixelated, pixel art, low quality, low fidelity
-================================================================================
-
-Press Ctrl+C to stop
-
-2025-10-25 14:23:45 | FPS: 18.34 | RX: 2.45 GB (24.3 MB/s) | TX: 3.12 GB (31.4 MB/s) | Frames: 1834
-```
-
-**Stats Legend:**
-- **FPS**: Average frames per second since start
-- **RX**: Total data received from input source (per-second rate)
-- **TX**: Total data sent to output stream (per-second rate)
-- **Frames**: Total frames processed
-
-When you press Ctrl+C:
-```
-Stopping...
-Cleaning up...
-
-Processed 1834 frames in 100.0s (18.34 FPS average)
-Done!
-```
-
-## Acceleration Modes
-
-### xformers (Default)
-- **Startup**: Fast (30-60 seconds)
-- **Performance**: Good (~15-20 FPS on RTX 3080)
-- **Use case**: Quick testing, development
-
-### TensorRT (Recommended)
-- **Startup**: Slow first time (5-10 minutes compilation), then fast
-- **Performance**: Excellent (~25-35 FPS on RTX 3080)
-- **Use case**: Production, maximum performance
-- **Note**: Engine is cached after first compilation
+**TensorRT (recommended for production):**
+- Slow first run (5-10min compilation, then cached)
+- Excellent performance (~25-35 FPS on RTX 3080)
+- Use with: `make start ACCELERATION=tensorrt`
 
 ## Configuration
 
 Edit `main.py` to customize:
+- **Line 33**: Prompt (cyberpunk, anime, oil painting, etc.)
+- **Line 34**: Negative prompt
+- **Line 35**: Model (default: stabilityai/sd-turbo)
+- **Lines 39-40**: Processing resolution (512x512)
+- **Lines 41-42**: Output resolution (1920x1080)
 
-### Prompt (Line 33)
-```python
-DEFAULT_PROMPT = "cyberpunk, neon lights, dark background, glowing, futuristic"
-```
-
-### Negative Prompt (Line 34)
-```python
-DEFAULT_NEGATIVE_PROMPT = "black and white, blurry, low resolution"
-```
-
-### Model (Line 35)
-```python
-MODEL_ID = "stabilityai/sd-turbo"  # or any Stable Diffusion model
-```
-
-### Resolution (Lines 39-40)
-```python
-WIDTH = 512   # Higher = better quality but slower
-HEIGHT = 512
-```
-
-### Example Prompts
-
-```python
-# Anime style
-DEFAULT_PROMPT = "anime style, detailed, vibrant colors, studio quality"
-
-# Oil painting
-DEFAULT_PROMPT = "oil painting, classical art style, detailed brushstrokes"
-
-# Sketch
-DEFAULT_PROMPT = "pencil sketch, hand-drawn, artistic, detailed lines"
-
-# Watercolor
-DEFAULT_PROMPT = "watercolor painting, soft colors, artistic, flowing"
-```
-
-## Performance Tips
-
-1. **Use TensorRT** for best performance (2-3x faster than xformers)
-2. **Close other GPU applications** (browsers, games, etc.)
-3. **Lower resolution** if needed (try 256x256 for maximum speed)
-4. **Reduce denoising steps** (line 43: `T_INDEX_LIST = [35, 45]`)
-5. **Use SD-Turbo model** (already configured, optimized for speed)
-
-### Expected Performance
-
-| GPU | Resolution | xformers | TensorRT |
-|-----|-----------|----------|----------|
-| RTX 4090 | 512x512 | ~30 FPS | ~50+ FPS |
-| RTX 3080 | 512x512 | ~15 FPS | ~30 FPS |
-| RTX 2060 | 512x512 | ~8 FPS | ~15 FPS |
+See [Configuration Guide](docs/configuration.md) for examples and performance tips.
 
 ## Troubleshooting
 
-### Dependency conflicts during installation
+**Dependency conflicts during installation?**
+- Expected! The Makefile uses `--no-deps` to install known working versions
+- See [Troubleshooting Guide](docs/troubleshooting.md)
 
-If you encounter pip dependency resolution errors, this is expected. The Makefile uses `--no-deps` strategically to install a known working combination of package versions:
-
-- `huggingface_hub==0.19.4`
-- `tokenizers==0.14.1`
-- `transformers==4.35.0`
-- `diffusers==0.24.0`
-- `accelerate==0.24.0`
-
-These versions have metadata conflicts but work perfectly together in practice. The `make install` or `make install-venv` commands handle this automatically.
-
-**If you're installing manually**, use `--no-deps` for the core packages:
-```bash
-pip install --no-deps huggingface_hub==0.19.4
-pip install --no-deps tokenizers==0.14.1
-pip install --no-deps transformers==4.35.0
-pip install --no-deps diffusers==0.24.0
-pip install --no-deps accelerate==0.24.0
-```
-
-Then install their dependencies separately with normal pip install.
-
-### No NDI sources found
-- Ensure NDI SDK is installed
-- Check NDI sources are on the same network
+**No NDI sources found?**
+- Install NDI SDK
+- Check sources are on same network
 - Increase timeout: `python main.py --timeout 10`
-- Verify firewall isn't blocking NDI (port 5960)
 
-### ModuleNotFoundError: No module named 'NDIlib'
-```bash
-pip install ndi-python
-```
-
-### CUDA out of memory
+**CUDA out of memory?**
 - Lower resolution in `main.py` (try 256x256)
 - Close other GPU applications
-- Reduce batch size (line 44: `FRAME_BUFFER_SIZE = 1`)
 
-### StreamDiffusion import errors
-Ensure StreamDiffusion path is correct in `start.sh`:
-```bash
-STREAMDIFFUSION_PATH="$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
-```
-
-Or pass it directly via command line:
-```bash
-python main.py --streamdiffusion-path "$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
-```
-
-### TensorRT compilation fails
-- Ensure TensorRT is installed: `pip install tensorrt==8.6.1`
-- Make sure CUDA 12.1 is installed
-- Try with xformers first to verify setup
-
-### Low FPS
-1. Use TensorRT: `--acceleration tensorrt`
-2. Lower resolution in `main.py`
-3. Check GPU usage with `nvidia-smi`
-4. Ensure no other GPU-intensive apps are running
-
-### NDI library not found
-If you get an error about NDI libraries not being found:
-```bash
-sudo ldconfig
-export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-```
+**More issues?** See [Troubleshooting Guide](docs/troubleshooting.md)
 
 ## Files
 
-- `main.py` - Main NDI processor script
-- `start.sh` - Quick launcher with xformers (interactive)
-- `Makefile` - Automated installation, dependency checking, and service management
-- `requirements.txt` - Python dependencies (for reference)
-
-## Architecture
-
-```
-main.py
-├── NDI Input
-│   ├── List available sources (with timeout)
-│   ├── Auto-select by name or prompt user
-│   ├── Connect to source
-│   └── Receive UYVY/RGBA video frames
-│
-├── Frame Conversion
-│   ├── NDI → PIL Image (RGB)
-│   └── Resize to model resolution (512x512)
-│
-├── StreamDiffusion Pipeline
-│   ├── Load SD-Turbo model
-│   ├── Initialize with acceleration (xformers/TensorRT)
-│   ├── Prepare prompts
-│   ├── Process img2img transformation
-│   └── Return PIL Image
-│
-├── Frame Conversion
-│   ├── PIL Image → RGBA numpy array
-│   └── Create NDI VideoFrameV2
-│
-└── NDI Output
-    ├── Create NDI sender
-    ├── Send processed frames
-    └── Output as "streamdiffusion-ndi-render"
-```
-
-## Known Issues
-
-- **Triton warning**: Harmless warning about missing Triton optimization (optional)
-- **TensorRT TracerWarnings**: Normal during first-time compilation
-- **First frame slow**: Model warmup takes a few seconds
-- **FutureWarnings**: Diffusers library deprecation warnings (cosmetic)
-
-## Development
-
-### Environment Variables
-
-Set HuggingFace cache location (optional):
-```bash
-export HF_HOME=$HOME/.cache/huggingface
-```
-
-### Debug Mode
-
-Add verbose logging in `main.py`:
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-## License
-
-Based on StreamDiffusion (Apache 2.0)
+- `main.py` - Main NDI processor
+- `start.sh` - Quick launcher script
+- `Makefile` - Installation and service management
+- `docs/` - Detailed documentation
 
 ## Credits
 
 - [StreamDiffusion](https://github.com/cumulo-autumn/StreamDiffusion) - Real-time diffusion pipeline
 - [NDI SDK](https://ndi.tv/) - Network Device Interface
 - [Stability AI](https://stability.ai/) - SD-Turbo model
-- [xformers](https://github.com/facebookresearch/xformers) - Memory-efficient attention
-- [TensorRT](https://developer.nvidia.com/tensorrt) - High-performance inference
 
-## Support
+Based on [streamdiffusion-ndi](https://github.com/ktamas77/streamdiffusion-ndi) with Windows support removed.
 
-For issues and questions:
-- StreamDiffusion: https://github.com/cumulo-autumn/StreamDiffusion/issues
-- NDI: https://ndi.tv/support/
-- This repo: Create an issue
+## License
+
+Apache 2.0 (based on StreamDiffusion)
 
 ---
 
-**Tested on:**
-- Ubuntu 22.04 LTS
-- Arch Linux
-- NVIDIA RTX 3080 (10GB VRAM)
-- CUDA 12.1
-- Python 3.10
-- StreamDiffusion v1
+**Tested on:** Ubuntu 22.04 LTS, Arch Linux | NVIDIA RTX 3080 | CUDA 12.1 | Python 3.10
