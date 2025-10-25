@@ -205,6 +205,67 @@ Add this as a source in:
 - Wirecast
 - Any NDI-compatible application
 
+### Example Output
+
+When running, you'll see output like this:
+
+```
+Searching for NDI sources (timeout: 5s)...
+
+Found 2 NDI source(s):
+  [0] MY-PC (OBS Studio)
+  [1] DESKTOP-ABC (vMix - Camera 1)
+
+Select NDI source [0-1]: 0
+
+Selected source: MY-PC (OBS Studio)
+
+Creating NDI receiver...
+Creating NDI sender: streamdiffusion-ndi-render
+
+Initializing StreamDiffusion...
+  Model: stabilityai/sd-turbo
+  Device: cuda
+  Resolution: 512x512
+  Prompt: cyberpunk, neon lights, dark background, glowing, futuristic
+  Acceleration: xformers
+StreamDiffusion initialized successfully!
+
+================================================================================
+                            STREAMING STARTED
+================================================================================
+  Input Source:       MY-PC (OBS Studio)
+  Input Resolution:   1920x1080
+  Internal Resolution: 512x512
+  Output Source:      streamdiffusion-ndi-render
+  Output Resolution:  1920x1080
+  Model:              stabilityai/sd-turbo
+  Device:             cuda:0
+  Acceleration:       xformers
+  Prompt:             cyberpunk, neon lights, dark background, glowing, futuristic
+  Negative Prompt:    black and white, blurry, low resolution, pixelated, pixel art, low quality, low fidelity
+================================================================================
+
+Press Ctrl+C to stop
+
+2025-10-25 14:23:45 | FPS: 18.34 | RX: 2.45 GB (24.3 MB/s) | TX: 3.12 GB (31.4 MB/s) | Frames: 1834
+```
+
+**Stats Legend:**
+- **FPS**: Average frames per second since start
+- **RX**: Total data received from input source (per-second rate)
+- **TX**: Total data sent to output stream (per-second rate)
+- **Frames**: Total frames processed
+
+When you press Ctrl+C:
+```
+Stopping...
+Cleaning up...
+
+Processed 1834 frames in 100.0s (18.34 FPS average)
+Done!
+```
+
 ## Acceleration Modes
 
 ### xformers (Default)
