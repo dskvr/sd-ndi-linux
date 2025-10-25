@@ -14,7 +14,7 @@ export HF_HOME="$HOME/.cache/huggingface"
 PYTHON_BIN="$HOME/miniconda3/envs/streamdiffusion/bin/python"
 
 # Set StreamDiffusion path - UPDATE THIS to match your StreamDiffusion installation
-STREAMDIFFUSION_PATH="$HOME/Projects/StreamDiffusion/streamdiffusion_repo"
+STREAMDIFFUSION_PATH="$HOME/Projects/StreamDiffusion"
 # ================================================
 
 # Change to script directory

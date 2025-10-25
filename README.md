@@ -30,7 +30,102 @@ NDI Input → StreamDiffusion (img2img) → NDI Output
 - **Python**: 3.10
 - **Disk Space**: ~10GB for models and dependencies
 
-## Prerequisites Installation
+## Quick Start with Makefile
+
+This project includes a comprehensive Makefile for easy installation and service management. You can use either **conda** (default) or **venv** for Python environment management.
+
+### Check Compatibility
+
+```bash
+make check-compat
+```
+
+This will verify:
+- Linux OS
+- NVIDIA GPU availability
+
+### Check Dependencies
+
+```bash
+make check-deps
+```
+
+This will check if all required dependencies are installed:
+- CUDA
+- Conda
+- NDI SDK
+- StreamDiffusion
+
+### Full Installation
+
+**Option 1: Using Conda (default):**
+```bash
+make install
+```
+
+**Option 2: Using Python venv:**
+```bash
+make install-venv
+```
+
+Both options will:
+1. Check system compatibility
+2. Guide you through prerequisite installation (CUDA, NDI SDK - conda skipped for venv)
+3. Create the Python environment
+4. Install all Python dependencies and StreamDiffusion
+
+**Note**:
+- Some steps (CUDA, NDI SDK) require manual download/installation
+- The Makefile will pause and provide instructions when manual action is needed
+- The `--no-deps` flag bypasses dependency conflicts while still installing working versions
+
+### Service Management
+
+**Start the processor (conda):**
+```bash
+make start
+```
+
+**Start the processor (venv):**
+```bash
+make start ENV_TYPE=venv
+```
+
+**Stop the processor:**
+```bash
+make stop
+```
+
+**Restart the processor:**
+```bash
+make restart
+```
+
+**Check status:**
+```bash
+make status
+```
+
+**Run a quick test (conda):**
+```bash
+make test
+```
+
+**Run a quick test (venv):**
+```bash
+make test ENV_TYPE=venv
+```
+
+### Available Commands
+
+Run `make help` to see all available commands:
+```bash
+make help
+```
+
+## Manual Prerequisites Installation
+
+If you prefer to install manually instead of using the Makefile, follow these steps:
 
 ### 1. Install NVIDIA CUDA 12.1
 
@@ -366,6 +461,29 @@ DEFAULT_PROMPT = "watercolor painting, soft colors, artistic, flowing"
 
 ## Troubleshooting
 
+### Dependency conflicts during installation
+
+If you encounter pip dependency resolution errors, this is expected. The Makefile uses `--no-deps` strategically to install a known working combination of package versions:
+
+- `huggingface_hub==0.19.4`
+- `tokenizers==0.14.1`
+- `transformers==4.35.0`
+- `diffusers==0.24.0`
+- `accelerate==0.24.0`
+
+These versions have metadata conflicts but work perfectly together in practice. The `make install` or `make install-venv` commands handle this automatically.
+
+**If you're installing manually**, use `--no-deps` for the core packages:
+```bash
+pip install --no-deps huggingface_hub==0.19.4
+pip install --no-deps tokenizers==0.14.1
+pip install --no-deps transformers==4.35.0
+pip install --no-deps diffusers==0.24.0
+pip install --no-deps accelerate==0.24.0
+```
+
+Then install their dependencies separately with normal pip install.
+
 ### No NDI sources found
 - Ensure NDI SDK is installed
 - Check NDI sources are on the same network
@@ -415,7 +533,8 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 - `main.py` - Main NDI processor script
 - `start.sh` - Quick launcher with xformers (interactive)
-- `requirements.txt` - Python dependencies
+- `Makefile` - Automated installation, dependency checking, and service management
+- `requirements.txt` - Python dependencies (for reference)
 
 ## Architecture
 

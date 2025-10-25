@@ -65,7 +65,7 @@ def list_ndi_sources(timeout=5):
     if not sources:
         print("No NDI sources found")
         NDI.find_destroy(ndi_find)
-        return []
+        return [], None
 
     print(f"\nFound {len(sources)} NDI source(s):")
     for idx, source in enumerate(sources):
@@ -211,7 +211,7 @@ def main():
     parser.add_argument("--ndi-source", type=str, default=None,
                        help="NDI source name to auto-select (text search, matches first)")
     parser.add_argument("--streamdiffusion-path", type=str,
-                       default=os.path.expanduser("~/Projects/StreamDiffusion/streamdiffusion_repo"),
+                       default=os.path.expanduser("~/Projects/StreamDiffusion"),
                        help="Path to StreamDiffusion repository")
     args = parser.parse_args()
 
