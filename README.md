@@ -162,7 +162,7 @@ See [Configuration Guide](docs/configuration.md) for examples and performance ti
 ## Credits
 
 - [StreamDiffusion](https://github.com/cumulo-autumn/StreamDiffusion) - Real-time diffusion pipeline
-- [NDI SDK](https://ndi.tv/) - Network Device Interface
+- [NDI SDK](https://ndi.video/) - Network Device Interface
 - [Stability AI](https://stability.ai/) - SD-Turbo model
 
 Based on [streamdiffusion-ndi](https://github.com/ktamas77/streamdiffusion-ndi) with Windows support removed.
